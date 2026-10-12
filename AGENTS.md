@@ -120,3 +120,34 @@ AscendNPU-IR-specific behavior isolated from community LLVM/MLIR behavior.
   ninja -C build check-mlir
   ninja -C build check-bishengir
   ```
+
+## Cursor Cloud specific instructions
+
+Cloud Agent VMs do not include an Ascend NPU or the CANN toolkit. Host
+compiler development and `check-bishengir` do not need them. Integration
+tests under `bishengir/test/Integration` do.
+
+- Clang selects the GCC 14 toolchain. Install `g++-14` and
+  `libstdc++-14-dev` before configuring, or `clang++` fails to link
+  `libstdc++`.
+- Install Ninja 1.12 or newer on `/usr/local/bin`. The Ubuntu
+  `ninja-build` package is older than the version this tree requires.
+- Linking the static Release binaries needs more RAM than the VM
+  provides. Create a 20GB swap file and configure with
+  `-DLLVM_PARALLEL_LINK_JOBS=1`. Raise the open-file limit with
+  `ulimit -n 65535` before Ninja.
+- Initialize only the LLVM submodule:
+  `git submodule update --init --depth 1 third-party/llvm-project`.
+- Configure and build from the repository root:
+
+  ```bash
+  ./build-tools/build.sh -o ./build --build-type Release --enable-lld -j "$(nproc)" \
+    --add-cmake-options "-DLLVM_PARALLEL_LINK_JOBS=1 -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_DOCS=OFF -DMLIR_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DMLIR_INCLUDE_TESTS=ON"
+  ```
+
+- `git remote get-url` can include credentials when `url.*.insteadOf`
+  rewrites GitHub. Do not leave those credentials in `VCSVersion.inc`.
+  Strip userinfo from `BISHENGIR_REPOSITORY` and relink
+  `bishengir-compile` if `--version` prints them.
+- Run host tests with `ninja -C build check-bishengir`. Binaries are
+  `build/bin/bishengir-compile` and `build/bin/bishengir-opt`.
