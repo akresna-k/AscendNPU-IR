@@ -72,8 +72,8 @@ static LogicalResult resolveLocalToLocal(UnrealizedConversionCastOp downPropOp,
                                          PatternRewriter &rewriter) {
   auto downCoreType = PropagatorUtil::getCoreType(downPropOp);
   auto upCoreType = PropagatorUtil::getCoreType(upPropOp);
-  if (downCoreType != TCoreType::CUBE_AND_VECTOR &&
-      upCoreType != TCoreType::CUBE_AND_VECTOR) {
+  if (downCoreType != TCoreType::CUBE_OR_VECTOR &&
+      upCoreType != TCoreType::CUBE_OR_VECTOR) {
     return resolveByInsertingStoreAndLoad(downPropOp, upPropOp, rewriter);
   }
   LogicalResult result = failure();
@@ -86,7 +86,7 @@ static LogicalResult resolveLocalToLocal(UnrealizedConversionCastOp downPropOp,
       mergedAddressSpace, [&rewriter](auto addressSpace) -> Attribute {
         return rewriter.getAttr<hivm::AddressSpaceAttr>(addressSpace);
       }));
-  if (downCoreType == TCoreType::CUBE_AND_VECTOR &&
+  if (downCoreType == TCoreType::CUBE_OR_VECTOR &&
       downAddressSpaces.size() != newAddressAttr.size()) {
     rewriter.modifyOpInPlace(downPropOp, [&]() {
       downPropOp->setAttr(hivm::AddressSpaceAttr::name, newAddressAttr);
@@ -95,7 +95,7 @@ static LogicalResult resolveLocalToLocal(UnrealizedConversionCastOp downPropOp,
                                        downPropOp, rewriter);
     result = success();
   }
-  if (upCoreType == TCoreType::CUBE_AND_VECTOR &&
+  if (upCoreType == TCoreType::CUBE_OR_VECTOR &&
       upAddressSpaces.size() != newAddressAttr.size()) {
     rewriter.modifyOpInPlace(upPropOp, [&]() {
       upPropOp->setAttr(hivm::AddressSpaceAttr::name, newAddressAttr);
@@ -308,15 +308,15 @@ LogicalResult TightCoupledBufferResolvePropagationPattern::matchAndRewrite(
   auto [upCoreType, upAddressSpace] =
       PropagatorUtil::extractPropagatorInfo(upPropOp);
   rewriter.setInsertionPointAfter(downPropOp);
-  if (downCoreType == TCoreType::CUBE_AND_VECTOR &&
+  if (downCoreType == TCoreType::CUBE_OR_VECTOR &&
       llvm::find(upAddressSpace, hivm::AddressSpace::UB) !=
           upAddressSpace.end() &&
       downPropOp.getInputs()[0].getDefiningOp<FixpipeOp>()) {
     LDBG("Ensuring Fixpipe to UB: " << downPropOp << "\n" << upPropOp << "\n");
     return ensureFixpipeToUB(downPropOp, upPropOp, rewriter);
   }
-  if (upCoreType == TCoreType::CUBE_AND_VECTOR ||
-      downCoreType == TCoreType::CUBE_AND_VECTOR) {
+  if (upCoreType == TCoreType::CUBE_OR_VECTOR ||
+      downCoreType == TCoreType::CUBE_OR_VECTOR) {
     LDBG("Resolving Local to Local: " << downPropOp << "\n"
                                       << upPropOp << "\n");
     return failure();
@@ -372,18 +372,18 @@ ResolvePropagationPattern::matchAndRewrite(UnrealizedConversionCastOp upPropOp,
   rewriter.setInsertionPointAfter(downPropOp);
   if (llvm::find(downAddressSpace, hivm::AddressSpace::GM) !=
           downAddressSpace.end() &&
-      upCoreType == TCoreType::CUBE_AND_VECTOR) {
+      upCoreType == TCoreType::CUBE_OR_VECTOR) {
     LDBG("Resolving GM to Local: " << downPropOp << "\n" << upPropOp << "\n");
     return resolveGMtoLocal(downPropOp, upPropOp, rewriter);
   }
-  if (downCoreType == TCoreType::CUBE_AND_VECTOR &&
+  if (downCoreType == TCoreType::CUBE_OR_VECTOR &&
       llvm::find(upAddressSpace, hivm::AddressSpace::GM) !=
           upAddressSpace.end()) {
     LDBG("Resolving Local to GM: " << downPropOp << "\n" << upPropOp << "\n");
     return resolveLocaltoGM(downPropOp, upPropOp, rewriter);
   }
-  if (upCoreType == TCoreType::CUBE_AND_VECTOR ||
-      downCoreType == TCoreType::CUBE_AND_VECTOR) {
+  if (upCoreType == TCoreType::CUBE_OR_VECTOR ||
+      downCoreType == TCoreType::CUBE_OR_VECTOR) {
     LDBG("Resolving Local to Local: " << downPropOp << "\n"
                                       << upPropOp << "\n");
     return resolveLocalToLocal(downPropOp, upPropOp, rewriter);
@@ -543,7 +543,7 @@ resolveMultipleAddressSpaceOperation(Operation *op, PatternRewriter &rewriter) {
     if (auto upProp = PropagatorUtil::getUpPropagator(&operand)) {
       auto [coreType, addressSpaces] =
           PropagatorUtil::extractPropagatorInfo(upProp);
-      if (coreType != TCoreType::CUBE_AND_VECTOR || addressSpaces.size() <= 1u)
+      if (coreType != TCoreType::CUBE_OR_VECTOR || addressSpaces.size() <= 1u)
         continue;
       for (auto addressSpace : addressSpaces) {
         if (!addressSpaceMap.contains(addressSpace)) {
@@ -560,7 +560,7 @@ resolveMultipleAddressSpaceOperation(Operation *op, PatternRewriter &rewriter) {
               "propagator: cannot detect propagator");
     auto [coreType, addressSpaces] =
         PropagatorUtil::extractPropagatorInfo(downProp);
-    if (coreType != TCoreType::CUBE_AND_VECTOR || addressSpaces.size() <= 1u)
+    if (coreType != TCoreType::CUBE_OR_VECTOR || addressSpaces.size() <= 1u)
       return rewriter.notifyMatchFailure(
           op, "Invalid case for resolving multi address "
               "propagator: cannot detect propagator");
@@ -578,8 +578,7 @@ resolveMultipleAddressSpaceOperation(Operation *op, PatternRewriter &rewriter) {
       auto [coreType, addressSpaces] =
           PropagatorUtil::extractPropagatorInfo(upProp);
       toErase.push_back(upProp);
-      if (coreType != TCoreType::CUBE_AND_VECTOR ||
-          addressSpaces.size() <= 1u) {
+      if (coreType != TCoreType::CUBE_OR_VECTOR || addressSpaces.size() <= 1u) {
         for (auto [addressSpace, newOp] : addressSpaceMap) {
           rewriter.setInsertionPoint(newOp);
           auto newUpProp = rewriter.clone(*upProp)->getResult(0);
@@ -632,7 +631,7 @@ LogicalResult CloneMultipleAddressSpaceOperation::matchAndRewrite(
   if (auto propagateOp = dyn_cast<UnrealizedConversionCastOp>(op)) {
     auto [coreType, addressSpaces] =
         PropagatorUtil::extractPropagatorInfo(propagateOp);
-    if (coreType != TCoreType::CUBE_AND_VECTOR || addressSpaces.size() != 2u)
+    if (coreType != TCoreType::CUBE_OR_VECTOR || addressSpaces.size() != 2u)
       return failure();
     return resolveMultipleAddressSpacePropagator(propagateOp, rewriter);
   }
