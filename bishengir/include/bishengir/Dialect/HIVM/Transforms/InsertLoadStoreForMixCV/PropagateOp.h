@@ -66,8 +66,8 @@ enum class PropagationStep {
 /// `ControlFlowPropagatePattern`, which requires a majority agreement.
 ///
 /// `step` gates which core type is propagated in the current rewrite round:
-/// step LOCAL handles mixed cube/vector markers, step UB handles vector markers,
-/// and step L1 handles cube markers.
+/// step LOCAL handles the default CUBE_OR_VECTOR propagator, step UB handles
+/// vector markers, and step L1 handles cube markers.
 ///
 /// Rewrites a down-propagator from a value to each operation that consumes it.
 /// For region-carrying ops this means walking RegionBranch edges. For HIVM

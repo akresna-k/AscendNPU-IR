@@ -41,11 +41,14 @@ bool isConstZero(Value v);
 bool isCubeAndVectorBroadcast(VBrcOp vbrcOp);
 namespace PropagatorUtil {
 
+/// Address-space to propagator core type.
+/// GM propagators use CUBE_AND_VECTOR. An unrealized_conversion_cast with no
+/// core-type attribute defaults to CUBE_OR_VECTOR.
 const llvm::SmallDenseMap<hivm::AddressSpace, TCoreType, 2>
     kAddressSpace2CoreType = {
         {hivm::AddressSpace::UB, TCoreType::VECTOR},
         {hivm::AddressSpace::L1, TCoreType::CUBE},
-        {hivm::AddressSpace::GM, TCoreType::CUBE_OR_VECTOR},
+        {hivm::AddressSpace::GM, TCoreType::CUBE_AND_VECTOR},
         {hivm::AddressSpace::L0C, TCoreType::CUBE},
 };
 
