@@ -1,0 +1,19 @@
+{
+  "name": "pr-approval-notifier",
+  "private": true,
+  "type": "module",
+  "description": "Email kresna when an AscendNPU-IR pull request still needs code-owner approval.",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "bdk dev",
+    "test": "tsx --test bot/lib/pending.test.ts bot/lib/smtp.test.ts"
+  },
+  "dependencies": {
+    "@cursor/bdk": "^0.2.23",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "6.0.3"
+  }
+}
