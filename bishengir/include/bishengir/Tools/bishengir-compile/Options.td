@@ -266,14 +266,6 @@ def EnableFastDiv : FeatureControlOptions<
   let passGroup = ["HFUSION"];
 }
 
-def EnableLegacyInsertLoadStoreForMixCV : FeatureControlOptions<
-  "Use legacy InsertLoadStoreForMixCV.",
-  "bool",
-  "false"
-> {
-  let passGroup = ["HIVM"];
-}
-
 //===----------------------------------------------------------------------===//
 // DFX Control Options
 //===----------------------------------------------------------------------===//

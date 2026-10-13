@@ -91,8 +91,6 @@ isCVPipeliningDisabled(const HIVMPipelineOptions &hivmPipelineOptions) {
 static void hivmAutoInsertLdStForMixCVPipeline(
     OpPassManager &pm, const HIVMPipelineOptions &hivmPipelineOptions) {
   InsertLoadStoreForMixCVOptions options;
-  options.enableLegacy =
-      hivmPipelineOptions.enableLegacyInsertLoadStoreForMixCV;
   options.target =
       hacc::stringifyTargetDeviceEnum(hivmPipelineOptions.target.getValue())
           .str();
