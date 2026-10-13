@@ -1,0 +1,84 @@
+name: PR approval notifier
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pr-approval-notifier
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: pr-approval-notifier/package-lock.json
+
+      - name: Install
+        working-directory: pr-approval-notifier
+        run: npm ci
+
+      - name: Load notifier state
+        run: |
+          set -euo pipefail
+          if git fetch origin notifier-state:refs/remotes/origin/notifier-state; then
+            git show refs/remotes/origin/notifier-state:state.json > "$RUNNER_TEMP/approval-state.json"
+          else
+            printf '%s\n' '{"notified":[]}' > "$RUNNER_TEMP/approval-state.json"
+          fi
+
+      - name: Email pull requests that need approval
+        working-directory: pr-approval-notifier
+        env:
+          APPROVAL_STATE_FILE: ${{ runner.temp }}/approval-state.json
+          APPROVAL_EMAIL_TO: kusjantono.kresna.kirana@huawei.com
+          APPROVAL_LOGIN: kresna
+          APPROVAL_REPO_OWNER: Ascend
+          APPROVAL_REPO: AscendNPU-IR
+          APPROVAL_SMTP_HOST: ${{ secrets.APPROVAL_SMTP_HOST }}
+          APPROVAL_SMTP_PORT: ${{ secrets.APPROVAL_SMTP_PORT }}
+          APPROVAL_SMTP_USER: ${{ secrets.APPROVAL_SMTP_USER }}
+          APPROVAL_SMTP_PASSWORD: ${{ secrets.APPROVAL_SMTP_PASSWORD }}
+          APPROVAL_SMTP_FROM: ${{ secrets.APPROVAL_SMTP_FROM }}
+          APPROVAL_SMTP_STARTTLS: ${{ secrets.APPROVAL_SMTP_STARTTLS }}
+          GITCODE_ACCESS_TOKEN: ${{ secrets.GITCODE_ACCESS_TOKEN }}
+        run: ./node_modules/.bin/tsx scripts/poll.ts
+
+      - name: Publish notifier state
+        env:
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+          state="$RUNNER_TEMP/approval-state.json"
+          if git rev-parse --verify refs/remotes/origin/notifier-state >/dev/null 2>&1 \
+            && git show refs/remotes/origin/notifier-state:state.json > "$RUNNER_TEMP/previous-state.json" \
+            && cmp -s "$state" "$RUNNER_TEMP/previous-state.json"; then
+            echo "notifier state unchanged"
+            exit 0
+          fi
+          blob=$(git hash-object -w "$state")
+          tree=$(printf '100644 blob %s\tstate.json\n' "$blob" | git mktree)
+          if git rev-parse --verify refs/remotes/origin/notifier-state >/dev/null 2>&1; then
+            parent=$(git rev-parse refs/remotes/origin/notifier-state)
+            commit=$(git commit-tree "$tree" -p "$parent" -m "[Tools] chore: record notified pull requests")
+          else
+            commit=$(git commit-tree "$tree" -m "[Tools] chore: record notified pull requests")
+          fi
+          git push origin "$commit:notifier-state"
