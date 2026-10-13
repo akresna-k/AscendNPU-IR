@@ -141,9 +141,9 @@ getPropagationInfoForPipe(hivm::PIPE pipe) {
   case hivm::PIPE::PIPE_FIX:
     return {TCoreType::CUBE, hivm::AddressSpace::L1};
   case hivm::PIPE::PIPE_MTE2:
-    return {TCoreType::CUBE_OR_VECTOR, hivm::AddressSpace::GM};
+    return {TCoreType::CUBE_AND_VECTOR, hivm::AddressSpace::GM};
   default:
-    return {TCoreType::CUBE_OR_VECTOR, hivm::AddressSpace::GM};
+    return {TCoreType::CUBE_AND_VECTOR, hivm::AddressSpace::GM};
   }
 }
 
@@ -172,7 +172,7 @@ void insertPropagatorsForCustomLikeOp(llvm::ArrayRef<hivm::PIPE> pipes,
   for (auto *input : structuredOp.getDpsInputOperands()) {
     // GM address operands must stay on GM (e.g. indirect atomics).
     if (isCustomLikeGMAddrOperand(op, *input)) {
-      tagOperandUp(input, TCoreType::CUBE_OR_VECTOR, hivm::AddressSpace::GM);
+      tagOperandUp(input, TCoreType::CUBE_AND_VECTOR, hivm::AddressSpace::GM);
       continue;
     }
     tagOperandUp(input, info.inCoreType, info.inAddressSpace);
@@ -274,7 +274,7 @@ Value createPropagator(Value v, StringRef directionAttrName, TCoreType coreType,
 Value createPropagator(Value v, StringRef directionAttrName,
                        ArrayRef<hivm::AddressSpace> addressSpaces,
                        OpBuilder &builder) {
-  return createPropagator(v, directionAttrName, TCoreType::CUBE_OR_VECTOR,
+  return createPropagator(v, directionAttrName, TCoreType::CUBE_AND_VECTOR,
                           addressSpaces, builder);
 }
 
@@ -311,7 +311,7 @@ void createPropagatorUp(OpOperand *operand, TCoreType coreType,
 void createPropagatorUp(OpOperand *operand,
                         ArrayRef<hivm::AddressSpace> addressSpaces,
                         PatternRewriter &rewriter) {
-  createPropagatorUp(operand, TCoreType::CUBE_OR_VECTOR, addressSpaces,
+  createPropagatorUp(operand, TCoreType::CUBE_AND_VECTOR, addressSpaces,
                      rewriter);
 }
 
@@ -350,7 +350,8 @@ void createPropagatorDown(Value res, TCoreType coreType,
 
 void createPropagatorDown(Value res, ArrayRef<hivm::AddressSpace> addressSpaces,
                           PatternRewriter &rewriter) {
-  createPropagatorDown(res, TCoreType::CUBE_OR_VECTOR, addressSpaces, rewriter);
+  createPropagatorDown(res, TCoreType::CUBE_AND_VECTOR, addressSpaces,
+                       rewriter);
 }
 
 void createPropagatorDown(Value res, UnrealizedConversionCastOp propagateOp,
@@ -374,7 +375,7 @@ void createPropagatorsUp(Operation *op, TCoreType coreType,
 void createPropagatorsUp(Operation *op,
                          ArrayRef<hivm::AddressSpace> addressSpaces,
                          PatternRewriter &rewriter) {
-  createPropagatorsUp(op, TCoreType::CUBE_OR_VECTOR, addressSpaces, rewriter);
+  createPropagatorsUp(op, TCoreType::CUBE_AND_VECTOR, addressSpaces, rewriter);
 }
 
 void createPropagatorsUp(Operation *op, UnrealizedConversionCastOp propagateOp,
@@ -398,7 +399,8 @@ void createPropagatorsDown(Operation *op, TCoreType coreType,
 void createPropagatorsDown(Operation *op,
                            ArrayRef<hivm::AddressSpace> addressSpaces,
                            PatternRewriter &rewriter) {
-  createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR, addressSpaces, rewriter);
+  createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR, addressSpaces,
+                        rewriter);
 }
 
 void createPropagatorsDown(Operation *op,
@@ -866,8 +868,8 @@ static WalkResult verifyUpPropagator(UnrealizedConversionCastOp upPropOp) {
       PropagatorUtil::extractPropagatorInfo(upPropOp);
   auto [downCoreType, downAddressSpace] =
       PropagatorUtil::extractPropagatorInfo(downPropOp);
-  if (upCoreType == downCoreType || upCoreType == TCoreType::CUBE_AND_VECTOR ||
-      downCoreType == TCoreType::CUBE_AND_VECTOR)
+  if (upCoreType == downCoreType || upCoreType == TCoreType::CUBE_OR_VECTOR ||
+      downCoreType == TCoreType::CUBE_OR_VECTOR)
     return WalkResult::advance();
   auto upOp = downPropOp.getInputs()[0];
   auto *downOp = *upPropOp->user_begin();

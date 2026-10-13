@@ -45,7 +45,7 @@ const llvm::SmallDenseMap<hivm::AddressSpace, TCoreType, 2>
     kAddressSpace2CoreType = {
         {hivm::AddressSpace::UB, TCoreType::VECTOR},
         {hivm::AddressSpace::L1, TCoreType::CUBE},
-        {hivm::AddressSpace::GM, TCoreType::CUBE_OR_VECTOR},
+        {hivm::AddressSpace::GM, TCoreType::CUBE_AND_VECTOR},
         {hivm::AddressSpace::L0C, TCoreType::CUBE},
 };
 
