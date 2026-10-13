@@ -1068,10 +1068,7 @@ def InsertLoadStoreForMixCV
                            "bishengir::memref_ext::MemRefExtDialect",
                            "bufferization::BufferizationDialect",
                            "annotation::AnnotationDialect"];
-  let options = [Option<"enableLegacy", "enable-legacy", "bool",
-                        /*default=*/"false",
-                        "Run legacy logic for insert load store op for mix cv">,
-                 Option<"target", "target", "std::string",
+  let options = [Option<"target", "target", "std::string",
                         /*default=*/"\"Ascend910B1\"", "Target device name">,
                  Option<"disableTightCoupledBuffer",
                         "disable-tight-coupled-buffer", "bool",
