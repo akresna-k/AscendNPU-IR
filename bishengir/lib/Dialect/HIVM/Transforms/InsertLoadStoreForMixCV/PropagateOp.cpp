@@ -49,7 +49,7 @@ static bool checkPropagate(PropagationStep step,
            addressSpaces.end();
   case PropagationStep::LOCAL:
     return PropagatorUtil::getCoreType(propagateOp) ==
-           TCoreType::CUBE_AND_VECTOR;
+           TCoreType::CUBE_OR_VECTOR;
   case PropagationStep::GM:
     return llvm::find(addressSpaces, hivm::AddressSpace::GM) !=
            addressSpaces.end();

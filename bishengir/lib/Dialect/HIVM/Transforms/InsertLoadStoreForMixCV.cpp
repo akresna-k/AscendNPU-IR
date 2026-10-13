@@ -1564,7 +1564,7 @@ static LogicalResult setOperationsCoreTypeForA5(OpBuilder builder,
                                                               addressSpaces[0]);
               op.setMemscopeAttr(memScopeAttr);
             }
-            if (coreType != TCoreType::CUBE_AND_VECTOR) {
+            if (coreType != TCoreType::CUBE_OR_VECTOR) {
               op.setTcoretypeAttr(
                   TCoreTypeAttr::get(op.getContext(), coreType));
             } else {
@@ -1590,7 +1590,7 @@ static LogicalResult setOperationsCoreTypeForA5(OpBuilder builder,
           auto inferNewCoreType =
               [&op](UnrealizedConversionCastOp upProp) -> TCoreTypeAttr {
             auto coreType = PropagatorUtil::getCoreType(upProp);
-            if (coreType != TCoreType::CUBE_AND_VECTOR) {
+            if (coreType != TCoreType::CUBE_OR_VECTOR) {
               return TCoreTypeAttr::get(op.getContext(), coreType);
             } else {
               auto addressSpaces = PropagatorUtil::getAddressSpace(upProp);
@@ -1661,7 +1661,7 @@ static LogicalResult setOperationsCoreTypeForA5(OpBuilder builder,
             return;
 
           auto coreType = PropagatorUtil::getCoreType(upProp);
-          if (coreType != TCoreType::CUBE_AND_VECTOR) {
+          if (coreType != TCoreType::CUBE_OR_VECTOR) {
             op->setAttr(hivm::TCoreTypeAttr::name,
                         TCoreTypeAttr::get(op.getContext(), coreType));
           } else {
@@ -1694,7 +1694,7 @@ static LogicalResult setOperationsCoreTypeForA3(OpBuilder builder,
                                                               addressSpaces[0]);
               op.setMemscopeAttr(memScopeAttr);
             }
-            if (coreType != TCoreType::CUBE_AND_VECTOR) {
+            if (coreType != TCoreType::CUBE_OR_VECTOR) {
               op.setTcoretypeAttr(
                   TCoreTypeAttr::get(op.getContext(), coreType));
             } else {
@@ -1710,7 +1710,7 @@ static LogicalResult setOperationsCoreTypeForA3(OpBuilder builder,
           auto upProp = PropagatorUtil::getUpPropagator(&op.getDstMutable());
           if (upProp) {
             auto coreType = PropagatorUtil::getCoreType(upProp);
-            if (coreType != TCoreType::CUBE_AND_VECTOR) {
+            if (coreType != TCoreType::CUBE_OR_VECTOR) {
               op.setTcoretypeAttr(
                   TCoreTypeAttr::get(op.getContext(), coreType));
             } else {
@@ -1729,7 +1729,7 @@ static LogicalResult setOperationsCoreTypeForA3(OpBuilder builder,
             return;
 
           auto coreType = PropagatorUtil::getCoreType(upProp);
-          if (coreType != TCoreType::CUBE_AND_VECTOR) {
+          if (coreType != TCoreType::CUBE_OR_VECTOR) {
             op->setAttr(hivm::TCoreTypeAttr::name,
                         TCoreTypeAttr::get(op.getContext(), coreType));
           } else {

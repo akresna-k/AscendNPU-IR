@@ -72,7 +72,7 @@ InsertPropagationPattern::matchAndRewrite(Operation *op,
       .Case<tensor::EmptyOp>([&](auto op) {
         if (isa<hivm::FixpipeOp>(*op->user_begin()))
           return failure();
-        PropagatorUtil::createPropagatorDown(op, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorDown(op, TCoreType::CUBE_OR_VECTOR,
                                              rewriter);
         return success();
       })
@@ -143,9 +143,9 @@ LogicalResult InsertPropagationPattern::insertPropagatorForDMAOp(
           PropagatorUtil::createPropagatorsDown(
               op, TCoreType::VECTOR, hivm::AddressSpace::UB, rewriter);
         } else {
-          PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_AND_VECTOR,
+          PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_OR_VECTOR,
                                              rewriter);
-          PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR,
+          PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR,
                                                 rewriter);
         }
         return success();
@@ -245,9 +245,9 @@ A5InsertionPattern::matchAndRewrite(Operation *op,
       .Case<hivm::VBrcOp>([&](auto vbrcOp) {
         // vbrc from scalar that can only be run on cube core
         if (isCubeAndVectorBroadcast(vbrcOp)) {
-          PropagatorUtil::createPropagatorsUp(op, TCoreType::CUBE_AND_VECTOR,
+          PropagatorUtil::createPropagatorsUp(op, TCoreType::CUBE_OR_VECTOR,
                                               rewriter);
-          PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR,
+          PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR,
                                                 rewriter);
           return success();
         }
@@ -258,9 +258,9 @@ A5InsertionPattern::matchAndRewrite(Operation *op,
         return success();
       })
       .Case<tensor::InsertSliceOp>([&](Operation *op) {
-        PropagatorUtil::createPropagatorsUp(op, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorsUp(op, TCoreType::CUBE_OR_VECTOR,
                                             rewriter);
-        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR,
                                               rewriter);
         return success();
       })
@@ -280,9 +280,9 @@ A5InsertionPattern::matchAndRewrite(Operation *op,
           return failure();
         PropagatorUtil::createPropagatorUp(srcOp, hivm::AddressSpace::GM,
                                            rewriter);
-        PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_OR_VECTOR,
                                            rewriter);
-        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR,
                                               rewriter);
         return success();
       })
@@ -420,9 +420,9 @@ LogicalResult TightCoupledBufferInsertionPattern::matchAndRewrite(
         auto *dstOp = &op.getDstMutable();
         if (op->use_empty())
           return failure();
-        PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorUp(dstOp, TCoreType::CUBE_OR_VECTOR,
                                            rewriter);
-        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_AND_VECTOR,
+        PropagatorUtil::createPropagatorsDown(op, TCoreType::CUBE_OR_VECTOR,
                                               rewriter);
         return success();
       })
