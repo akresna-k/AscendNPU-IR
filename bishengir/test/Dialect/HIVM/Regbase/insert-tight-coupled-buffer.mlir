@@ -787,7 +787,7 @@ module attributes {hacc.target = #hacc.target<"Ascend950PR_9579">} {
 
 // -----
 
-// nZ insert_slice feeding mmad stays CUBE_AND_VECTOR (same as ND insert).
+// nZ insert_slice feeding mmad stays CUBE_OR_VECTOR (same as ND insert).
 // Dest lives on L1 with mmad; do not copy the assembled dest UB→cbuf.
 // CHECK-LABEL: func.func @fractal_insert_slice_mmad_rhs(
 // CHECK: %[[INS:.*]] = tensor.insert_slice
