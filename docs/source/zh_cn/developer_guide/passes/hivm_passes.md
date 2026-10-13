@@ -291,7 +291,7 @@
 
 ## -hivm-insert-cv-tight-coupled-buffer
 
-**功能**：为mix cv插入CV紧耦合缓冲区。
+**功能**：将已标记的`tensor.empty`占位符替换为紧耦合缓冲区。
 
 **选项**：
 

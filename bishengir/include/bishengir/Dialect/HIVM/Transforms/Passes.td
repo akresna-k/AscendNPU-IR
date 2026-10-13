@@ -1085,7 +1085,7 @@ def InsertLoadStoreForMixCV
 
 def InsertCVTightCoupledBuffer
     : Pass<"hivm-insert-cv-tight-coupled-buffer", "func::FuncOp"> {
-  let summary = "insert cv tight coupled buffer for mix cv";
+  let summary = "Replace marked tensors with tightly coupled buffers";
   let constructor = "mlir::hivm::createInsertCVTightCoupledBufferPass()";
   let dependentDialects = ["hivm::HIVMDialect",
                            "bufferization::BufferizationDialect",
