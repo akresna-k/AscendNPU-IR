@@ -125,6 +125,12 @@ def escape_pdf_text(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
 
 
+def format_node_label(operation_name: str, max_length: int = 14) -> str:
+    if len(operation_name) <= max_length:
+        return operation_name
+    return operation_name[: max_length - 3] + "..."
+
+
 def draw_circle_commands(x: float, y: float, radius: float) -> list[str]:
     kappa = 0.552284749831 * radius
     return [
@@ -180,10 +186,24 @@ def write_pdf_graph(
     page_width = graph_panel + legend_panel + 2.0 * margin
     page_height = max(min_height, legend_height)
 
+    node_labels = {
+        operation.node_id: format_node_label(operation.name) for operation in operations
+    }
+    max_label_length = max((len(label) for label in node_labels.values()), default=1)
+
     center_x = margin + graph_panel / 2.0
     center_y = page_height / 2.0
-    node_radius = 18.0
-    graph_radius = max(40.0, min(graph_panel / 2.0 - 50.0, 36.0 + len(operations) * 6.0))
+    node_radius = max(20.0, min(40.0, 10.0 + max_label_length * 1.2))
+    max_graph_radius = graph_panel / 2.0 - node_radius - 20.0
+    required_spacing = 2.6 * node_radius
+    required_graph_radius = (required_spacing * max(1, len(operations))) / (2.0 * math.pi)
+    graph_radius = max(
+        40.0,
+        min(
+            max_graph_radius,
+            max(required_graph_radius, 36.0 + len(operations) * 6.0),
+        ),
+    )
 
     node_positions: dict[str, tuple[float, float]] = {}
     for operation, position in zip(
@@ -215,11 +235,14 @@ def write_pdf_graph(
     for index, operation in enumerate(operations):
         node_x, node_y = node_positions[operation.node_id]
         commands.extend(draw_circle_commands(node_x, node_y, node_radius))
-        label = str(index)
-        text_x = node_x - (len(label) * 2.7)
-        text_y = node_y - 3.5
+        label = node_labels[operation.node_id]
+        label_font_size = max(6.0, min(9.0, node_radius / 2.8))
+        label_width = len(label) * label_font_size * 0.5
+        text_x = node_x - (label_width / 2.0)
+        text_y = node_y - (label_font_size * 0.33)
         commands.append(
-            f"BT /F1 9 Tf {text_x:.2f} {text_y:.2f} Td ({escape_pdf_text(label)}) Tj ET"
+            f"BT /F1 {label_font_size:.2f} Tf {text_x:.2f} {text_y:.2f} Td "
+            f"({escape_pdf_text(label)}) Tj ET"
         )
 
     legend_x = margin + graph_panel + 15.0
